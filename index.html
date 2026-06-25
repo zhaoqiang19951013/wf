@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>逻辑判断课堂小游戏 - 数据驱动版</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 40px 20px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.box {
+  max-width: 680px;
+  width: 100%;
+  background: #fff;
+  padding: 40px 36px;
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.header h2 {
+  font-size: 22px;
+  color: #1a1a2e;
+  margin-bottom: 8px;
+}
+
+.header p {
+  font-size: 14px;
+  color: #888;
+}
+
+.q-card {
+  background: #f8f9fc;
+  border: 1px solid #e8ecf4;
+  border-radius: 14px;
+  padding: 24px;
+  margin-bottom: 20px;
+  transition: box-shadow 0.2s;
+}
+
+.q-card:hover {
+  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.08);
+}
+
+.q-number {
+  display: inline-block;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 20px;
+  margin-bottom: 12px;
+}
+
+.q-text {
+  font-size: 16px;
+  color: #2d3748;
+  line-height: 1.6;
+  margin-bottom: 16px;
+}
+
+.options {
+  display: flex;
+  gap: 12px;
+}
+
+.opt-btn {
+  flex: 1;
+  padding: 12px 20px;
+  font-size: 15px;
+  font-weight: 500;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  background: #fff;
+  color: #4a5568;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.opt-btn:hover:not(:disabled) {
+  border-color: #667eea;
+  color: #667eea;
+  background: #f0f4ff;
+  transform: translateY(-1px);
+}
+
+.opt-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.opt-btn.correct {
+  border-color: #48bb78;
+  background: #f0fff4;
+  color: #276749;
+}
+
+.opt-btn.wrong {
+  border-color: #fc8181;
+  background: #fff5f5;
+  color: #c53030;
+}
+
+.answer-box {
+  margin-top: 14px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 1.6;
+  display: none;
+}
+
+.answer-box.show {
+  display: block;
+  animation: fadeIn 0.3s ease;
+}
+
+.answer-box.correct-bg {
+  background: #f0fff4;
+  border: 1px solid #c6f6d5;
+  color: #276749;
+}
+
+.answer-box.wrong-bg {
+  background: #fff5f5;
+  border: 1px solid #fed7d7;
+  color: #c53030;
+}
+
+.answer-box .explain {
+  display: block;
+  margin-top: 6px;
+  font-size: 13px;
+  color: #718096;
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid #edf2f7;
+}
+
+.score-display {
+  font-size: 18px;
+  font-weight: 600;
+  color: #2d3748;
+}
+
+.score-display span {
+  color: #667eea;
+}
+
+.shuffle-btn {
+  padding: 12px 28px;
+  font-size: 15px;
+  font-weight: 500;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 14px rgba(102, 126, 234, 0.35);
+}
+
+.shuffle-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.45);
+}
+
+.shuffle-btn:active {
+  transform: translateY(0);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 520px) {
+  body { padding: 20px 12px; }
+  .box { padding: 24px 18px; }
+  .options { flex-direction: column; }
+}
+</style>
+</head>
+<body>
+<div class="box">
+  <div class="header">
+    <h2>📚 联言判断与选言判断 · 随堂闯关</h2>
+    <p>选择正确答案，测试你的逻辑判断能力</p>
+  </div>
+
+  <div id="content"></div>
+
+  <div class="footer">
+    <div class="score-display" id="scoreBox">得分: <span>0</span> / 0</div>
+    <button class="shuffle-btn" onclick="shuffleAndRender()">🔄 重新出题</button>
+  </div>
+</div>
+
+<script>
+const questionBank = [
+  {
+    id: 1,
+    text: "'人不犯我，我不犯人' 属于联言判断",
+    options: [
+      { text: "✓ 正确", correct: false, explains: "这不是一个典型的联言判断，更多是对人际关系的描述性表述。" },
+      { text: "✗ 错误", correct: true, explains: "该句更像是一种条件性/对称性的表达，通常不被视为联言判断。" }
+    ]
+  },
+  {
+    id: 2,
+    text: "联言判断只要有一个支判断为假，整个判断就是假判断",
+    options: [
+      { text: "✓ 正确", correct: true, explains: "联言判断（逻辑与：A∧B）只有两个支都为真时才为真。若任意一个为假，结果为假。" },
+      { text: "✗ 错误", correct: false, explains: "只有两者都为真才为真，这是联言判断的基本逻辑规则。" }
+    ]
+  },
+  {
+    id: 3,
+    text: "相容选言判断两个支判断不能同时为真",
+    options: [
+      { text: "✓ 正确", correct: false, explains: "选言判断（逻辑或：A∨B）只要任一为真即可为真，两个同时为真也成立。" },
+      { text: "✗ 错误", correct: true, explains: "两个支同时为真在常规的或运算（相容选言）中是允许的。" }
+    ]
+  }
+];
+
+let currentQuestions = [];
+let score = 0;
+let total = 0;
+
+function shuffleAndRender() {
+  currentQuestions = shuffleArray(questionBank.map(q => ({ ...q })));
+  total = currentQuestions.length;
+  score = 0;
+  render();
+  updateScore();
+}
+
+function shuffleArray(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function render() {
+  const container = document.getElementById('content');
+  container.innerHTML = '';
+  currentQuestions.forEach((q, idx) => {
+    const card = document.createElement('div');
+    card.className = 'q-card';
+
+    const number = document.createElement('span');
+    number.className = 'q-number';
+    number.textContent = `第 ${idx + 1} 题`;
+    card.appendChild(number);
+
+    const text = document.createElement('div');
+    text.className = 'q-text';
+    text.textContent = q.text;
+    card.appendChild(text);
+
+    const options = document.createElement('div');
+    options.className = 'options';
+
+    q.options.forEach(opt => {
+      const btn = document.createElement('button');
+      btn.className = 'opt-btn';
+      btn.textContent = opt.text;
+      btn.addEventListener('click', () => checkAnswer(idx, opt.correct, opt.explains, btn, card));
+      options.appendChild(btn);
+    });
+
+    card.appendChild(options);
+
+    const answerBox = document.createElement('div');
+    answerBox.className = 'answer-box';
+    answerBox.id = `answer-${idx}`;
+    card.appendChild(answerBox);
+
+    container.appendChild(card);
+  });
+}
+
+function checkAnswer(qIndex, isCorrect, explanation, btn, card) {
+  const buttons = card.querySelectorAll('.opt-btn');
+  buttons.forEach(b => b.disabled = true);
+
+  if (isCorrect) {
+    score++;
+    btn.classList.add('correct');
+  } else {
+    btn.classList.add('wrong');
+    // highlight the correct one
+    buttons.forEach(b => {
+      if (b !== btn) b.classList.add('correct');
+    });
+  }
+
+  const answerBox = document.getElementById(`answer-${qIndex}`);
+  answerBox.classList.add('show', isCorrect ? 'correct-bg' : 'wrong-bg');
+  answerBox.innerHTML = (isCorrect ? '✅ 回答正确！' : '❌ 回答错误') +
+    (explanation ? `<span class="explain">💡 ${explanation}</span>` : '');
+
+  updateScore();
+}
+
+function updateScore() {
+  const scoreBox = document.getElementById('scoreBox');
+  scoreBox.innerHTML = `得分: <span>${score}</span> / ${total}`;
+}
+
+window.addEventListener('load', () => {
+  shuffleAndRender();
+});
+</script>
+</body>
+</html>
